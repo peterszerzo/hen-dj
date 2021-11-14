@@ -1,10 +1,14 @@
 <script lang="ts">
   import Player from "$lib/Player.svelte";
+
+  type Selected = "left" | "right";
+
+  let selected: Selected = "left";
 </script>
 
 <div class="container">
-  <Player />
-  <Player />
+  <Player selected={selected === "left"} />
+  <Player selected={selected === "right"} />
 </div>
 
 <style>

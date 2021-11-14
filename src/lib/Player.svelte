@@ -1,13 +1,13 @@
-<script context="module" lang="ts">
-  export const ssr = false;
-</script>
-
 <script lang="ts">
+  import { onMount } from "svelte";
+  import { equals } from "ramda";
   import { analyzeSong } from "$lib/audio";
 
   let highFreq = 1280.0;
   let lowFreq = 160.0;
   let midFreq = 720;
+
+  export let selected: boolean = false;
 
   let element: HTMLAudioElement | null = null;
   let context: AudioContext | null = null;
@@ -66,6 +66,42 @@
   }
 
   let currentTime: number = 0;
+
+  let keys = [];
+
+  const handleKeyPress = (ev: any) => {
+    if (!selected) {
+      return;
+    }
+    if (ev.key === "Escape") {
+      keys = [];
+      return;
+    }
+    let tempKeys = [...keys, ev.key];
+    if (equals(tempKeys, [" "])) {
+      keys = [];
+      playing = !playing;
+      return;
+    }
+    if (equals(tempKeys, ["d", "l"])) {
+      keys = [];
+      lowfValue = -24;
+      return;
+    }
+    if (equals(tempKeys, ["i", "l"])) {
+      keys = [];
+      lowfValue = 0;
+      return;
+    }
+    keys = tempKeys;
+  };
+
+  onMount(() => {
+    window.addEventListener("keydown", handleKeyPress);
+    return () => {
+      window.removeEventListener("keydown", handleKeyPress);
+    };
+  });
 
   const handlePlaythrough = () => {
     if (element && loadedFile) {
@@ -162,6 +198,9 @@
 </script>
 
 <div class="player">
+  <p class="select-bar">
+    {#if selected}*{:else}.{/if}
+  </p>
   {#if loadedFile}
     <div class="song">
       <p>{loadedFile.name}</p>
@@ -318,6 +357,10 @@
     border: 0;
     background-color: #fff;
     color: #000;
+  }
+
+  .select-bar {
+    text-align: center;
   }
 
   .play-pause-button:hover {
