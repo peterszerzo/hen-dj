@@ -9,10 +9,9 @@
 
 <style>
   .container {
-    display: flex;
-  }
-
-  .container > :global(*) {
-    flex-grow: 1;
+    padding: 20px;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    grid-gap: 20px;
   }
 </style>
