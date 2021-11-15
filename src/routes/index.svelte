@@ -20,16 +20,7 @@
   });
 </script>
 
-<div class="container">
-  <Player selected={selected === "left"} />
+<div class="grid grid-cols-2 gap-x-8 p-8">
+  <Player selected={selected === "left"} flippedLayout />
   <Player selected={selected === "right"} />
 </div>
-
-<style>
-  .container {
-    padding: 20px;
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    grid-gap: 20px;
-  }
-</style>

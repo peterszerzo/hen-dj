@@ -2,13 +2,5 @@
   import "../app.css";
 </script>
 
-<header>hen dj</header>
-<div>
-  <slot />
-</div>
-
-<style>
-  header {
-    padding: 20px 20px;
-  }
-</style>
+<header class="py-4 px-8">hen dj</header>
+<slot />

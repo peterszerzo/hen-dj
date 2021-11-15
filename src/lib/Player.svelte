@@ -9,6 +9,8 @@
   let lowFreq = 160.0;
   let midFreq = 720;
 
+  export let flippedLayout: boolean = false;
+
   export let selected: boolean = false;
 
   let element: HTMLAudioElement | null = null;
@@ -221,178 +223,146 @@
   };
 </script>
 
-<div class="player">
-  <p class="select-bar">
-    {#if selected}*{:else}.{/if}
+<div class="space-y-4 col-span-1">
+  <p class="text-center">
+    {#if selected}<span
+        class="inline-block w-4 h-4 rounded-full bg-white transition-all"
+        style="box-shadow: 0 0 0 2px black, 0 0 0 4px white"
+      />{:else}<span class="inline-block w-4 h-4 rounded-full bg-gray-600" />
+    {/if}
   </p>
-  <label class="file-input">
-    <input type="file" on:input={handleFileInput} />
+  <label
+    class="flex transition-all items-center justify-center p-4 border border-gray-700 hover:bg-gray-900 cursor-pointer h-[180px]"
+  >
+    <input type="file" class="sr-only" on:input={handleFileInput} />
     {#if loadedFile}
-      <div class="song">
-        <p>{loadedFile.name}</p>
-        {#if songAnalysis}
-          <p>BPM: {songAnalysis.bpm}</p>
-        {/if}
-        <p>
-          {formatSeconds(currentTime)} / {formatSeconds(
-            loadedFile.duration || 0
-          )}
-        </p>
+      <div class="w-full flex flex-col justify-between h-full">
+        <p class="text-lg">{loadedFile.name}</p>
+        <div class="flex items-end justify-between">
+          <p>
+            {formatSeconds(currentTime)} / {formatSeconds(
+              loadedFile.duration || 0
+            )}
+          </p>
+          {#if songAnalysis}
+            <div>
+              <p class="text-sm text-right">BPM</p>
+              <p class="text-2xl">{songAnalysis.bpm}</p>
+            </div>
+          {/if}
+        </div>
       </div>
     {:else}
-      <span>Select a file</span>
+      <span>Select a file (mp3, wav, flac)</span>
     {/if}
   </label>
-  {#if loadedFile?.duration}
-    <input
-      type="range"
-      min="0"
-      max="100"
-      step="0.01"
-      style="width: 100%"
-      value={(currentTime / loadedFile.duration) * 100}
-      on:input={handleRangeInput}
-    />
-  {/if}
-  <canvas width="100%" height="100" use:drawSongAnalysisAction={songAnalysis} />
-  <label class="slider">
-    <span>Volume</span>
-    <input
-      type="range"
-      min="0"
-      max="1"
-      step="0.01"
-      value={volValue}
-      on:input={handleVolInput}
-    />
-  </label>
-  <label class="slider">
-    <span>High</span>
-    <input
-      type="range"
-      min="-24"
-      max="24"
-      step="0.1"
-      value={highfValue}
-      on:input={handleHighfInput}
-    />
-  </label>
-  <label class="slider">
-    <span>Mid</span>
-    <input
-      type="range"
-      min="-24"
-      max="24"
-      step="0.1"
-      value={midfValue}
-      on:input={handleMidfInput}
-    />
-  </label>
-  <label class="slider">
-    <span>Low</span>
-    <input
-      type="range"
-      min="-24"
-      max="24"
-      step="0.1"
-      value={lowfValue}
-      on:input={handleLowfInput}
-    />
-  </label>
-  <button
-    class="play-pause-button"
-    on:click={() => {
-      playing = !playing;
-    }}
-  >
-    {#if playing}
-      <svg
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        stroke-width="2"
-        stroke-linecap="round"
-        stroke-linejoin="round"
-        ><rect x="6" y="4" width="4" height="16" /><rect
-          x="14"
-          y="4"
-          width="4"
-          height="16"
-        /></svg
+  <canvas
+    class="border border-gray-700"
+    width="100%"
+    height="100"
+    use:drawSongAnalysisAction={songAnalysis}
+  />
+  <input
+    type="range"
+    min="0"
+    max="100"
+    step="0.01"
+    style="width: 100%"
+    value={(currentTime / (loadedFile?.duration || 400)) * 100}
+    on:input={handleRangeInput}
+  />
+  <div class={`flex items-end justify-between`}>
+    <div class={`space-y-4 ${flippedLayout ? "order-2" : "order-1"}`}>
+      <div class="space-y-1">
+        <label class="block">
+          <p class="text-xs">highs</p>
+          <input
+            type="range"
+            min="-24"
+            max="24"
+            step="0.1"
+            value={highfValue}
+            on:input={handleHighfInput}
+          />
+        </label>
+        <label class="block">
+          <p class="text-xs">mids</p>
+          <input
+            type="range"
+            min="-24"
+            max="24"
+            step="0.1"
+            value={midfValue}
+            on:input={handleMidfInput}
+          />
+        </label>
+        <label class="block">
+          <p class="text-xs">lows</p>
+          <input
+            type="range"
+            min="-24"
+            max="24"
+            step="0.1"
+            value={lowfValue}
+            on:input={handleLowfInput}
+          />
+        </label>
+      </div>
+      <label class="block">
+        <p class="text-xs">volume</p>
+        <input
+          type="range"
+          min="0"
+          max="1"
+          step="0.01"
+          value={volValue}
+          on:input={handleVolInput}
+        />
+      </label>
+    </div>
+    <div class={`${flippedLayout ? "order-1" : "order-2"}`}>
+      <button
+        class="w-16 h-16 transition-all bg-white rounded-full text-black hover:bg-black hover:text-white border-2 border-white p-4"
+        on:click={() => {
+          playing = !playing;
+        }}
       >
-    {:else}
-      <svg
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        stroke-width="2"
-        stroke-linecap="round"
-        stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3" /></svg
-      >
-    {/if}
-  </button>
+        {#if playing}
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            ><rect x="6" y="4" width="4" height="16" /><rect
+              x="14"
+              y="4"
+              width="4"
+              height="16"
+            /></svg
+          >
+        {:else}
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3" /></svg
+          >
+        {/if}
+      </button>
+    </div>
+  </div>
 </div>
 
 <style>
-  .player > * + * {
-    margin-top: 20px;
-  }
-
-  .file-input {
-    display: flex;
-    width: 100%;
-    height: 180px;
-    align-items: center;
-    justify-content: center;
-    padding: 20px;
-    border: 1px solid rgba(255, 255, 255, 0.3);
-    cursor: pointer;
-  }
-
-  input[type="file"] {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    padding: 0;
-    margin: -1px;
-    overflow: hidden;
-    clip: rect(0, 0, 0, 0);
-    white-space: nowrap;
-    border-width: 0;
-  }
-
-  .file-input:hover {
-    background-color: #232323;
-  }
-
   .song {
     height: 100%;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-  }
-
-  .slider {
-    display: block;
-  }
-
-  .play-pause-button {
-    display: inline-block;
-    padding: 15px;
-    width: 60px;
-    height: 60px;
-    border-radius: 50%;
-    border: 0;
-    background-color: #fff;
-    color: #000;
-  }
-
-  .select-bar {
-    text-align: center;
-  }
-
-  .play-pause-button:hover {
-    background-color: #efefef;
   }
 </style>

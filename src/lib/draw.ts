@@ -4,12 +4,12 @@ export const drawSongAnalysis = (
   canvasElement: HTMLCanvasElement,
   songAnalysis: SongAnalysis | null
 ) => {
-  if (!songAnalysis) {
-    return;
-  }
   const width = (canvasElement.parentNode as any)?.offsetWidth;
   const height = canvasElement.height;
   canvasElement.width = width;
+  if (!songAnalysis) {
+    return;
+  }
   const ctx = canvasElement.getContext("2d");
   ctx.fillStyle = "#fff";
   songAnalysis.raw.forEach((value, index) => {

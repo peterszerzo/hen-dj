@@ -13,11 +13,13 @@
   "devDependencies": {
     "@sveltejs/kit": "next",
     "@types/ramda": "^0.27.49",
+    "postcss": "^8.3.11",
     "prettier": "^2.4.1",
     "prettier-plugin-svelte": "^2.4.0",
     "svelte": "^3.42.6",
     "svelte-check": "^2.2.6",
     "svelte-preprocess": "^4.9.4",
+    "tailwindcss": "^2.2.19",
     "tslib": "^2.3.1",
     "typescript": "^4.4.3"
   },
