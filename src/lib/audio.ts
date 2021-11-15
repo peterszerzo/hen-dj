@@ -1,6 +1,23 @@
 import { toPairs, sortBy } from "ramda";
 
-export const analyzeSong = (file: File) => {
+export interface SongAnalysis {
+  raw: Float32Array;
+  max: number;
+  min: number;
+  bpm?: number;
+  peaks?: Array<number>;
+  sampleRate: number;
+}
+
+export const formatSeconds = (totalSeconds: number) => {
+  const minutes = Math.floor(totalSeconds / 60);
+  const seconds = Math.floor(totalSeconds - 60 * minutes);
+  return `${minutes < 10 ? "0" : ""}${minutes}:${
+    seconds < 10 ? "0" : ""
+  }${seconds}`;
+};
+
+export const analyzeSong = (file: File): Promise<SongAnalysis> => {
   return new Promise((resolve) => {
     const reader = new FileReader();
     reader.onload = () => {
@@ -37,9 +54,23 @@ export const analyzeSong = (file: File) => {
           const filteredBuffer = event.renderedBuffer;
           const data = filteredBuffer.getChannelData(0);
 
-          getPeaks(data, buffer.sampleRate);
+          const max = data.reduce((a, b) => Math.max(a, b), -Infinity);
+          const min = data.reduce((a, b) => Math.min(a, b), +Infinity);
 
-          resolve(data);
+          const peaksAnalysis = analyzePeaks(data, {
+            sampleRate: buffer.sampleRate,
+            min,
+            max,
+          });
+
+          resolve({
+            raw: data,
+            max,
+            min,
+            bpm: peaksAnalysis?.bpm,
+            peaks: peaksAnalysis?.peaks,
+            sampleRate: buffer.sampleRate,
+          });
         };
       });
     };
@@ -48,29 +79,38 @@ export const analyzeSong = (file: File) => {
   });
 };
 
-const getPeaks = (
+const analyzePeaks = (
   arr: Float32Array,
-  sampleRate: number
-): null | { peaks: Array<number>; bpm: number } => {
+  context: {
+    min: number;
+    max: number;
+    sampleRate: number;
+  }
+): null | { peaks: Array<number>; offset: number; bpm: number } => {
   const peaks = [];
   let index = 0;
-  const max = arr.reduce((a, b) => Math.max(a, b), -Infinity);
   while (index < arr.length) {
-    if (arr[index] > max * 0.75) {
+    if (arr[index] > context.max * 0.75) {
       peaks.push(index);
       index += 5000;
     } else {
       index += 1;
     }
   }
-  const bpmCandidates = {};
+  const bpmCandidates: Record<string, Array<number>> = {};
+  if (peaks.length < 3) {
+    return null;
+  }
   peaks.forEach((peakIndex, index) => {
     if (index === peaks.length - 1) {
       return;
     }
     const diff = peaks[index + 1] - peakIndex;
-    let bpmCandidate = Math.round(60 / (diff / sampleRate));
-    while (bpmCandidate !== 0 && bpmCandidate < 85) {
+    let bpmCandidate = Math.round((60 * context.sampleRate) / diff);
+    if (bpmCandidate < 20) {
+      return;
+    }
+    while (bpmCandidate < 90) {
       bpmCandidate *= 2;
     }
     bpmCandidates[bpmCandidate] = [
@@ -85,8 +125,26 @@ const getPeaks = (
   if (!bestBpmCandidate) {
     return null;
   }
+  const bpm = Number(bestBpmCandidate[0]);
+  const bpmIndexDiff = (60 * context.sampleRate) / bpm;
+
+  let offsets: Record<string, number> = {};
+  peaks.forEach((peak) => {
+    const offset = Math.round(peak % bpmIndexDiff);
+    const simplifiedOffset = Math.round(offset / 10) * 10;
+    offsets[simplifiedOffset] = (offsets[simplifiedOffset] || 0) + 1;
+  });
+
+  const offsetCandidate = Number(
+    sortBy(
+      ([_offsetCandidate, occurrance]) => -occurrance,
+      toPairs(offsets)
+    )[0]?.[0]
+  );
+
   return {
     peaks,
+    offset: isNaN(offsetCandidate) ? 0 : offsetCandidate,
     bpm: Number(bestBpmCandidate[0]),
   };
 };

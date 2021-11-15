@@ -1,7 +1,9 @@
 <script lang="ts">
   import { onMount } from "svelte";
-  import { equals } from "ramda";
-  import { analyzeSong } from "$lib/audio";
+  import { analyzeSong, formatSeconds } from "$lib/audio";
+  import type { SongAnalysis } from "$lib/audio";
+  import { drawSongAnalysis } from "./draw";
+  import { validSequence } from "./keyboard";
 
   let highFreq = 1280.0;
   let lowFreq = 160.0;
@@ -22,30 +24,24 @@
   let highfValue: number = 0;
   let volValue: number = 1;
 
-  let worker: any;
-
   let playing: boolean = false;
 
-  let d: Float32Array | null = null;
-
-  let canvasElement: HTMLCanvasElement;
-
-  const drawWaveform = (canvasElement: HTMLCanvasElement, d: Float32Array) => {
-    const dim = (canvasElement.parentNode as any)?.offsetWidth;
-    canvasElement.width = dim;
-    const ctx = canvasElement.getContext("2d");
-    ctx.fillStyle = "#fff";
-    d.forEach((value, index) => {
-      if (index % 500 === 0) {
-        ctx.fillRect((dim * index) / (d.length - 1), 50 + 30 * value, 1, 1);
-      }
-    });
-  };
-
-  $: d && drawWaveform(canvasElement, d);
+  let songAnalysis: SongAnalysis | null = null;
 
   let loadedFile: { name: string; type: string; duration?: number } | null =
     null;
+
+  const drawSongAnalysisAction = (
+    node: HTMLCanvasElement,
+    songAnalysis: SongAnalysis | null
+  ) => {
+    drawSongAnalysis(node, songAnalysis);
+    return {
+      update(newSongAnalysis: SongAnalysis) {
+        drawSongAnalysis(node, newSongAnalysis);
+      },
+    };
+  };
 
   $: playing ? element?.play() : element?.pause();
 
@@ -73,24 +69,46 @@
     if (!selected) {
       return;
     }
+    // Global keys
+    if (keys.length === 0 && ev.key === "t") {
+      return;
+    }
     if (ev.key === "Escape") {
       keys = [];
       return;
     }
     let tempKeys = [...keys, ev.key];
-    if (equals(tempKeys, [" "])) {
+    const sequence = validSequence(tempKeys);
+    if (sequence) {
       keys = [];
-      playing = !playing;
-      return;
-    }
-    if (equals(tempKeys, ["d", "l"])) {
-      keys = [];
-      lowfValue = -24;
-      return;
-    }
-    if (equals(tempKeys, ["i", "l"])) {
-      keys = [];
-      lowfValue = 0;
+      if (sequence.verb === "p") {
+        playing = !playing;
+        return;
+      }
+      const ratio =
+        sequence.verb === "d"
+          ? 0
+          : sequence.verb === "i"
+          ? 1
+          : sequence.verb === "s"
+          ? (sequence.numberModifier || 0) / 8
+          : 0;
+      if (sequence.subject === "l") {
+        lowfValue = -24 + 24 * ratio;
+        return;
+      }
+      if (sequence.subject === "m") {
+        midfValue = -24 + 24 * ratio;
+        return;
+      }
+      if (sequence.subject === "h") {
+        highfValue = -24 + 24 * ratio;
+        return;
+      }
+      if (sequence.subject === "v") {
+        volValue = ratio;
+        return;
+      }
       return;
     }
     keys = tempKeys;
@@ -111,6 +129,12 @@
 
   const setupAudio = (audioUrl: string) => {
     context = new AudioContext();
+    if (element) {
+      element.pause();
+      element.removeEventListener("canplaythrough", handlePlaythrough);
+      element.remove();
+    }
+
     element = new Audio();
 
     element.addEventListener("canplaythrough", handlePlaythrough);
@@ -182,8 +206,8 @@
   const handleFileInput = (ev: any) => {
     const file = ev.target.files[0];
     if (file) {
-      analyzeSong(file).then((res) => {
-        d = res;
+      analyzeSong(file).then((res: SongAnalysis) => {
+        songAnalysis = res;
       });
       const name = file.name;
       const type = file.type;
@@ -201,29 +225,36 @@
   <p class="select-bar">
     {#if selected}*{:else}.{/if}
   </p>
-  {#if loadedFile}
-    <div class="song">
-      <p>{loadedFile.name}</p>
-      <p>{Math.floor(currentTime)} / {Math.floor(loadedFile.duration || 0)}</p>
-      {#if loadedFile?.duration}
-        <input
-          type="range"
-          min="0"
-          max="100"
-          step="0.01"
-          style="width: 100%"
-          value={(currentTime / loadedFile.duration) * 100}
-          on:input={handleRangeInput}
-        />
-      {/if}
-    </div>
-  {:else}
-    <label class="file-input">
-      <input type="file" on:input={handleFileInput} />
+  <label class="file-input">
+    <input type="file" on:input={handleFileInput} />
+    {#if loadedFile}
+      <div class="song">
+        <p>{loadedFile.name}</p>
+        {#if songAnalysis}
+          <p>BPM: {songAnalysis.bpm}</p>
+        {/if}
+        <p>
+          {formatSeconds(currentTime)} / {formatSeconds(
+            loadedFile.duration || 0
+          )}
+        </p>
+      </div>
+    {:else}
       <span>Select a file</span>
-    </label>
+    {/if}
+  </label>
+  {#if loadedFile?.duration}
+    <input
+      type="range"
+      min="0"
+      max="100"
+      step="0.01"
+      style="width: 100%"
+      value={(currentTime / loadedFile.duration) * 100}
+      on:input={handleRangeInput}
+    />
   {/if}
-  <canvas width="100%" height="100" bind:this={canvasElement} />
+  <canvas width="100%" height="100" use:drawSongAnalysisAction={songAnalysis} />
   <label class="slider">
     <span>Volume</span>
     <input
@@ -335,11 +366,9 @@
   }
 
   .song {
-    height: 180px;
-    padding: 20px;
+    height: 100%;
     display: flex;
     flex-direction: column;
-    border: 1px solid rgba(255, 255, 255, 0.3);
     align-items: center;
     justify-content: center;
   }
