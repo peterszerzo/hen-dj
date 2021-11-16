@@ -12,10 +12,10 @@ export const drawSongAnalysis = (
   }
   const ctx = canvasElement.getContext("2d");
   ctx.fillStyle = "#fff";
-  songAnalysis.raw.forEach((value, index) => {
+  songAnalysis.sample.forEach((value, index) => {
     if (index % 500 === 0) {
       ctx.fillRect(
-        (width * index) / (songAnalysis.raw.length - 1),
+        (width * index) / (songAnalysis.sample.length - 1),
         height / 2 + ((height / 2) * value) / songAnalysis.max,
         1,
         1
@@ -25,7 +25,8 @@ export const drawSongAnalysis = (
   ctx.fillStyle = "rgba(255, 0, 0, 0.3)";
   (songAnalysis.peaks || []).forEach((peakIndex) => {
     ctx.fillRect(
-      (width * peakIndex) / (songAnalysis.raw.length - 1),
+      (width * peakIndex) /
+        (songAnalysis.sample.length * songAnalysis.sampleSize - 1),
       height * 0.1,
       1,
       height * 0.8

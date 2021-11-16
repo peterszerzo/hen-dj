@@ -26,12 +26,21 @@
   let highfValue: number = 0;
   let volValue: number = 1;
 
+  let bpmDiff: number = 0;
+
   let playing: boolean = false;
 
   let songAnalysis: SongAnalysis | null = null;
 
   let loadedFile: { name: string; type: string; duration?: number } | null =
     null;
+
+  const adjustPlayback = (bpmDiff: number) => {
+    if (element && songAnalysis) {
+      const baseBpm = songAnalysis.bpm;
+      element.playbackRate = (baseBpm + bpmDiff) / baseBpm;
+    }
+  };
 
   const drawSongAnalysisAction = (
     node: HTMLCanvasElement,
@@ -50,6 +59,8 @@
   $: if (vol) {
     vol.gain.value = volValue;
   }
+
+  $: adjustPlayback(bpmDiff);
 
   $: if (highf && context) {
     highf.gain.setValueAtTime(highfValue, context.currentTime);
@@ -83,6 +94,18 @@
     const sequence = validSequence(tempKeys);
     if (sequence) {
       keys = [];
+      if (sequence.verb === ",") {
+        bpmDiff = Math.round(bpmDiff * 10 + 2) / 10;
+        return;
+      }
+      if (sequence.verb === ".") {
+        bpmDiff = Math.round(bpmDiff * 10 - 2) / 10;
+        return;
+      }
+      if (sequence.verb === "/") {
+        bpmDiff = 0;
+        return;
+      }
       if (sequence.verb === "p") {
         playing = !playing;
         return;
@@ -247,7 +270,10 @@
           {#if songAnalysis}
             <div>
               <p class="text-sm text-right">BPM</p>
-              <p class="text-2xl">{songAnalysis.bpm}</p>
+              <p class="text-2xl">
+                {Number(songAnalysis.bpm + bpmDiff).toFixed(1)}
+                <span class="text-xs">{Number(bpmDiff).toFixed(1)}</span>
+              </p>
             </div>
           {/if}
         </div>

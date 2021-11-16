@@ -2,7 +2,9 @@ import { findLastIndex, slice } from "ramda";
 
 const subjects = ["h", "m", "l", "v"];
 
-const verbs = ["d", "i", "f", "p", "s"];
+const verbs = ["d", "i", "f", "p", "s", ",", ".", "/"];
+
+const subjectFreeVerbs = ["p", ",", ".", "/"];
 
 const modifiers = ["0", "1", "2", "3", "4", "5", "6", "7", "8"];
 
@@ -16,9 +18,9 @@ export const validSequence = (
 } => {
   const lastVerbIndex = findLastIndex((key) => verbs.includes(key), keys);
   const verb = keys[lastVerbIndex];
-  if (verb === "p") {
+  if (subjectFreeVerbs.includes(verb)) {
     return {
-      verb: "p",
+      verb,
     };
   }
   const lastSequence = slice(lastVerbIndex, Infinity, keys);

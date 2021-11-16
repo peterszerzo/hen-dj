@@ -1,6 +1,7 @@
 <script lang="ts">
   import { onMount } from "svelte";
   import Player from "$lib/Player.svelte";
+  import { downsample } from "$lib/audio";
 
   type Selected = "left" | "right";
 
