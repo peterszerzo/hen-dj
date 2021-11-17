@@ -2,16 +2,18 @@ import { toPairs, sortBy } from "ramda";
 
 export interface SongAnalysis {
   bufferLength: number;
+  sampleRate: number;
   sampleSize: number;
   sample: Array<number>;
+  duration: number;
   max: number;
   min: number;
   bpm?: number;
   peaks?: Array<number>;
-  sampleRate: number;
+  offset?: number;
 }
 
-const sampleSize = 50;
+const sampleSize = 10;
 
 export const downsample = (arr: Float32Array, n: number): Array<number> => {
   let i = 0;
@@ -84,10 +86,12 @@ export const analyzeSong = (file: File): Promise<SongAnalysis> => {
             bufferLength: data.length,
             sampleSize,
             sample: downsample(data, sampleSize),
+            duration: buffer.duration,
             max,
             min,
             bpm: peaksAnalysis?.bpm,
             peaks: peaksAnalysis?.peaks,
+            offset: peaksAnalysis?.offset,
             sampleRate: buffer.sampleRate,
           });
         };

@@ -197,13 +197,33 @@
       if (element && playing) {
         currentTime = element.currentTime;
       }
-    }, 1000);
+    }, 50);
 
     return () => {
       clearInterval(interval);
       element.removeEventListener("canplaythrough", handleRangeInput);
     };
   };
+
+  const getIntensity = (
+    currentTime: number,
+    songAnalysis: SongAnalysis | null
+  ) => {
+    if (!songAnalysis) {
+      return 0;
+    }
+    const absolute =
+      songAnalysis.sample[
+        Math.floor(
+          (currentTime / songAnalysis.duration) * songAnalysis.sample.length
+        )
+      ];
+    const relative =
+      (absolute - songAnalysis.min) / (songAnalysis.max - songAnalysis.min);
+    return relative;
+  };
+
+  $: intensity = getIntensity(currentTime, songAnalysis);
 
   const handleRangeInput = (ev: any) => {
     const newValue = ev.target.value;
@@ -282,6 +302,10 @@
       <span>Select a file (mp3, wav, flac)</span>
     {/if}
   </label>
+  <p
+    style={`width: ${300 * intensity}px; transition: all 0.05s ease-in-out`}
+    class="h-2 rounded bg-white"
+  />
   <canvas
     class="border border-gray-700"
     width="100%"
