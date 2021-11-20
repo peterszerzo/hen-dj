@@ -1,5 +1,6 @@
 <script lang="ts">
   import { onMount } from "svelte";
+  import { spring } from "svelte/motion";
   import type { Track } from "$lib/track";
   import { analyzeSong, formatSeconds } from "$lib/audio";
   import IntensityBar from "$lib/IntensityBar.svelte";
@@ -27,10 +28,22 @@
   let midf: BiquadFilterNode | null = null;
   let vol: GainNode | null = null;
 
-  let lowfValue: number = 0;
-  let midfValue: number = 0;
-  let highfValue: number = 0;
-  let volValue: number = 1;
+  const lowfValue = spring(0, {
+    stiffness: 0.001,
+    damping: 0.05,
+  });
+  const midfValue = spring(0, {
+    stiffness: 0.001,
+    damping: 0.05,
+  });
+  const highfValue = spring(0, {
+    stiffness: 0.001,
+    damping: 0.05,
+  });
+  const volValue = spring(1, {
+    stiffness: 0.001,
+    damping: 0.06,
+  });
 
   let bpmDiff: number = 0;
 
@@ -53,19 +66,19 @@
   $: adjustPlayback(bpmDiff);
 
   $: if (vol) {
-    vol.gain.value = volValue;
+    vol.gain.value = $volValue;
   }
 
   $: if (highf && context) {
-    highf.gain.setValueAtTime(highfValue, context.currentTime);
+    highf.gain.setValueAtTime($highfValue, context.currentTime);
   }
 
   $: if (midf && context) {
-    midf.gain.setValueAtTime(midfValue, context.currentTime);
+    midf.gain.setValueAtTime($midfValue, context.currentTime);
   }
 
   $: if (lowf && context) {
-    lowf.gain.setValueAtTime(lowfValue, context.currentTime);
+    lowf.gain.setValueAtTime($lowfValue, context.currentTime);
   }
 
   let currentTime: number = 0;
@@ -129,19 +142,19 @@
           ? (sequence.numberModifier || 0) / 8
           : 0;
       if (sequence.subject === "l") {
-        lowfValue = -24 + 24 * ratio;
+        lowfValue.update(() => -24 + 24 * ratio);
         return;
       }
       if (sequence.subject === "m") {
-        midfValue = -24 + 24 * ratio;
+        midfValue.update(() => -24 + 24 * ratio);
         return;
       }
       if (sequence.subject === "h") {
-        highfValue = -24 + 24 * ratio;
+        highfValue.update(() => -24 + 24 * ratio);
         return;
       }
       if (sequence.subject === "v") {
-        volValue = ratio;
+        volValue.update(() => ratio);
         return;
       }
       return;
@@ -172,18 +185,18 @@
     lowf = context.createBiquadFilter();
     lowf.type = "lowshelf";
     lowf.frequency.setValueAtTime(lowFreq, context.currentTime);
-    lowf.gain.setValueAtTime(lowfValue, context.currentTime);
+    lowf.gain.setValueAtTime($lowfValue, context.currentTime);
 
     midf = context.createBiquadFilter();
     midf.type = "peaking";
     midf.frequency.setValueAtTime(midFreq, context.currentTime);
     midf.Q.setValueAtTime(1.12, context.currentTime);
-    midf.gain.setValueAtTime(midfValue, context.currentTime);
+    midf.gain.setValueAtTime($midfValue, context.currentTime);
 
     highf = context.createBiquadFilter();
     highf.type = "highshelf";
     highf.frequency.setValueAtTime(highFreq, context.currentTime);
-    highf.gain.setValueAtTime(highfValue, context.currentTime);
+    highf.gain.setValueAtTime($highfValue, context.currentTime);
 
     vol = context.createGain();
     vol.gain.value = 0.1;
@@ -234,19 +247,19 @@
   };
 
   const handleVolInput = (ev: any) => {
-    volValue = ev.target.value;
+    volValue.update(() => ev.target.value, { hard: true });
   };
 
   const handleHighfInput = (ev: any) => {
-    highfValue = ev.target.value;
+    highfValue.update(() => ev.target.value, { hard: true });
   };
 
   const handleMidfInput = (ev: any) => {
-    midfValue = ev.target.value;
+    midfValue.update(() => ev.target.value, { hard: true });
   };
 
   const handleLowfInput = (ev: any) => {
-    lowfValue = ev.target.value;
+    lowfValue.update(() => ev.target.value, { hard: true });
   };
 
   const handleFileInput = (ev: any) => {
@@ -349,7 +362,7 @@
               min="-24"
               max="24"
               step="0.1"
-              value={highfValue}
+              value={$highfValue}
               on:input={handleHighfInput}
             />
           </label>
@@ -360,7 +373,7 @@
               min="-24"
               max="24"
               step="0.1"
-              value={midfValue}
+              value={$midfValue}
               on:input={handleMidfInput}
             />
           </label>
@@ -371,7 +384,7 @@
               min="-24"
               max="24"
               step="0.1"
-              value={lowfValue}
+              value={$lowfValue}
               on:input={handleLowfInput}
             />
           </label>
@@ -383,7 +396,7 @@
             min="0"
             max="1"
             step="0.01"
-            value={volValue}
+            value={$volValue}
             on:input={handleVolInput}
           />
         </label>
