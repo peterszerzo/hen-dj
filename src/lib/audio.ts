@@ -13,7 +13,7 @@ export interface SongAnalysis {
   offset?: number;
 }
 
-const sampleSize = 10;
+const sampleSize = 200;
 
 export const downsample = (arr: Float32Array, n: number): Array<number> => {
   let i = 0;

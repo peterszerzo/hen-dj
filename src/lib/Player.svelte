@@ -1,6 +1,7 @@
 <script lang="ts">
   import { onMount } from "svelte";
   import { analyzeSong, formatSeconds } from "$lib/audio";
+  import IntensityBar from "$lib/IntensityBar.svelte";
   import type { SongAnalysis } from "$lib/audio";
   import { drawSongAnalysis } from "./draw";
   import { validSequence } from "./keyboard";
@@ -104,6 +105,22 @@
       }
       if (sequence.verb === "/") {
         bpmDiff = 0;
+        return;
+      }
+      if (sequence.verb === "[" && element && songAnalysis) {
+        element.currentTime -= ((60 / songAnalysis.bpm) * 1) / 8;
+        return;
+      }
+      if (sequence.verb === "]" && element && songAnalysis) {
+        element.currentTime += ((60 / songAnalysis.bpm) * 1) / 8;
+        return;
+      }
+      if (sequence.verb === "{" && element && songAnalysis) {
+        element.currentTime -= (60 / songAnalysis.bpm) * 1;
+        return;
+      }
+      if (sequence.verb === "}" && element && songAnalysis) {
+        element.currentTime += (60 / songAnalysis.bpm) * 1;
         return;
       }
       if (sequence.verb === "p") {
@@ -264,9 +281,12 @@
       reader.readAsDataURL(file);
     }
   };
+
+  let customClass: string = "";
+  export { customClass as class };
 </script>
 
-<div class="space-y-4 col-span-1">
+<div class={`space-y-4 p-8 ${customClass}`}>
   <p class="text-center">
     {#if selected}<span
         class="inline-block w-4 h-4 rounded-full bg-white transition-all"
@@ -275,7 +295,7 @@
     {/if}
   </p>
   <label
-    class="flex transition-all items-center justify-center p-4 border border-gray-700 hover:bg-gray-900 cursor-pointer h-[180px]"
+    class="flex transition-all items-center justify-center p-4 bg-gray-900 hover:bg-gray-800 cursor-pointer h-[180px]"
   >
     <input type="file" class="sr-only" on:input={handleFileInput} />
     {#if loadedFile}
@@ -299,19 +319,17 @@
         </div>
       </div>
     {:else}
-      <span>Select a file (mp3, wav, flac)</span>
+      <span class="text-gray-400">Select a file (mp3, wav, flac)</span>
     {/if}
   </label>
-  <p
-    style={`width: ${300 * intensity}px; transition: all 0.05s ease-in-out`}
-    class="h-2 rounded bg-white"
-  />
-  <canvas
-    class="border border-gray-700"
-    width="100%"
-    height="100"
-    use:drawSongAnalysisAction={songAnalysis}
-  />
+  <div>
+    <canvas
+      class="bg-gray-900"
+      width="100%"
+      height="100"
+      use:drawSongAnalysisAction={songAnalysis}
+    />
+  </div>
   <input
     type="range"
     min="0"
@@ -322,53 +340,65 @@
     on:input={handleRangeInput}
   />
   <div class={`flex items-end justify-between`}>
-    <div class={`space-y-4 ${flippedLayout ? "order-2" : "order-1"}`}>
-      <div class="space-y-1">
+    <div
+      class={`flex items-center space-x-8 ${
+        flippedLayout ? "order-2" : "order-1"
+      }`}
+    >
+      {#if !flippedLayout}
+        <IntensityBar value={intensity} />
+      {/if}
+      <div class="space-y-4">
+        <div class="space-y-1">
+          <label class="block">
+            <p class="text-xs">highs</p>
+            <input
+              type="range"
+              min="-24"
+              max="24"
+              step="0.1"
+              value={highfValue}
+              on:input={handleHighfInput}
+            />
+          </label>
+          <label class="block">
+            <p class="text-xs">mids</p>
+            <input
+              type="range"
+              min="-24"
+              max="24"
+              step="0.1"
+              value={midfValue}
+              on:input={handleMidfInput}
+            />
+          </label>
+          <label class="block">
+            <p class="text-xs">lows</p>
+            <input
+              type="range"
+              min="-24"
+              max="24"
+              step="0.1"
+              value={lowfValue}
+              on:input={handleLowfInput}
+            />
+          </label>
+        </div>
         <label class="block">
-          <p class="text-xs">highs</p>
+          <p class="text-xs">volume</p>
           <input
             type="range"
-            min="-24"
-            max="24"
-            step="0.1"
-            value={highfValue}
-            on:input={handleHighfInput}
-          />
-        </label>
-        <label class="block">
-          <p class="text-xs">mids</p>
-          <input
-            type="range"
-            min="-24"
-            max="24"
-            step="0.1"
-            value={midfValue}
-            on:input={handleMidfInput}
-          />
-        </label>
-        <label class="block">
-          <p class="text-xs">lows</p>
-          <input
-            type="range"
-            min="-24"
-            max="24"
-            step="0.1"
-            value={lowfValue}
-            on:input={handleLowfInput}
+            min="0"
+            max="1"
+            step="0.01"
+            value={volValue}
+            on:input={handleVolInput}
           />
         </label>
       </div>
-      <label class="block">
-        <p class="text-xs">volume</p>
-        <input
-          type="range"
-          min="0"
-          max="1"
-          step="0.01"
-          value={volValue}
-          on:input={handleVolInput}
-        />
-      </label>
+      {#if flippedLayout}
+        <IntensityBar value={intensity} />
+      {/if}
     </div>
     <div class={`${flippedLayout ? "order-1" : "order-2"}`}>
       <button
@@ -406,13 +436,3 @@
     </div>
   </div>
 </div>
-
-<style>
-  .song {
-    height: 100%;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-  }
-</style>

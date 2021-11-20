@@ -13,7 +13,7 @@ export const drawSongAnalysis = (
   const ctx = canvasElement.getContext("2d");
   ctx.fillStyle = "#fff";
   songAnalysis.sample.forEach((value, index) => {
-    if (index % 500 === 0) {
+    if (index % 2 === 0) {
       ctx.fillRect(
         (width * index) / (songAnalysis.sample.length - 1),
         height / 2 + ((height / 2) * value) / songAnalysis.max,
@@ -22,14 +22,16 @@ export const drawSongAnalysis = (
       );
     }
   });
-  ctx.fillStyle = "rgba(255, 0, 0, 0.3)";
-  (songAnalysis.peaks || []).forEach((peakIndex) => {
-    ctx.fillRect(
-      (width * peakIndex) /
-        (songAnalysis.sample.length * songAnalysis.sampleSize - 1),
-      height * 0.1,
-      1,
-      height * 0.8
-    );
-  });
+  ctx.fillStyle = "rgba(255, 0, 100, 0.1)";
+  if (false) {
+    (songAnalysis.peaks || []).forEach((peakIndex) => {
+      ctx.fillRect(
+        (width * peakIndex) /
+          (songAnalysis.sample.length * songAnalysis.sampleSize - 1),
+        height * 0.3,
+        1,
+        height * 0.4
+      );
+    });
+  }
 };
