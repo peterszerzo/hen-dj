@@ -3,7 +3,11 @@
 </script>
 
 <header class="py-4 px-8 border-b border-gray-800">hen dj</header>
-<slot />
+
+<main class="flex-grow">
+  <slot />
+</main>
+
 <footer class="py-4 px-8 border-t border-gray-800">
   <p class="text-gray-500 text-xs text-right">
     by <a

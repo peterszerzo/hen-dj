@@ -1,18 +1,23 @@
 <script lang="ts">
   import { onMount } from "svelte";
+  import type { Track } from "$lib/track";
   import { analyzeSong, formatSeconds } from "$lib/audio";
   import IntensityBar from "$lib/IntensityBar.svelte";
+  import Waveform from "$lib/Waveform.svelte";
   import type { SongAnalysis } from "$lib/audio";
-  import { drawSongAnalysis } from "./draw";
   import { validSequence } from "./keyboard";
 
   let highFreq = 1280.0;
   let lowFreq = 160.0;
   let midFreq = 720;
 
+  export let tracks: Array<Track> = [];
+
   export let flippedLayout: boolean = false;
 
   export let selected: boolean = false;
+
+  export let backgroundImage: string | undefined = undefined;
 
   let element: HTMLAudioElement | null = null;
   let context: AudioContext | null = null;
@@ -33,7 +38,7 @@
 
   let songAnalysis: SongAnalysis | null = null;
 
-  let loadedFile: { name: string; type: string; duration?: number } | null =
+  let selectedTrack: { name: string; type: string; cover?: string } | null =
     null;
 
   const adjustPlayback = (bpmDiff: number) => {
@@ -43,25 +48,13 @@
     }
   };
 
-  const drawSongAnalysisAction = (
-    node: HTMLCanvasElement,
-    songAnalysis: SongAnalysis | null
-  ) => {
-    drawSongAnalysis(node, songAnalysis);
-    return {
-      update(newSongAnalysis: SongAnalysis) {
-        drawSongAnalysis(node, newSongAnalysis);
-      },
-    };
-  };
-
   $: playing ? element?.play() : element?.pause();
+
+  $: adjustPlayback(bpmDiff);
 
   $: if (vol) {
     vol.gain.value = volValue;
   }
-
-  $: adjustPlayback(bpmDiff);
 
   $: if (highf && context) {
     highf.gain.setValueAtTime(highfValue, context.currentTime);
@@ -163,23 +156,14 @@
     };
   });
 
-  const handlePlaythrough = () => {
-    if (element && loadedFile) {
-      loadedFile = { ...loadedFile, duration: element.duration };
-    }
-  };
-
   const setupAudio = (audioUrl: string) => {
     context = new AudioContext();
     if (element) {
       element.pause();
-      element.removeEventListener("canplaythrough", handlePlaythrough);
       element.remove();
     }
 
     element = new Audio();
-
-    element.addEventListener("canplaythrough", handlePlaythrough);
 
     element.src = audioUrl;
 
@@ -244,8 +228,8 @@
 
   const handleRangeInput = (ev: any) => {
     const newValue = ev.target.value;
-    if (element && loadedFile.duration) {
-      element.currentTime = (loadedFile.duration * newValue) / 100;
+    if (element && songAnalysis) {
+      element.currentTime = (songAnalysis.duration * newValue) / 100;
     }
   };
 
@@ -275,7 +259,7 @@
       const type = file.type;
       const reader = new FileReader();
       reader.onload = (ev: any) => {
-        loadedFile = { name, type };
+        selectedTrack = { name, type };
         setupAudio(ev.target.result);
       };
       reader.readAsDataURL(file);
@@ -286,7 +270,12 @@
   export { customClass as class };
 </script>
 
-<div class={`space-y-4 p-8 ${customClass}`}>
+<div
+  class={`space-y-4 p-8 ${customClass}`}
+  style={`background-image: linear-gradient( rgba(0, 0, 0, ${
+    0.7 + 0.1 * intensity
+  }), rgba(0, 0, 0, ${0.7 + 0.1 * intensity}) ), url(${backgroundImage})`}
+>
   <p class="text-center">
     {#if selected}<span
         class="inline-block w-4 h-4 rounded-full bg-white transition-all"
@@ -298,13 +287,13 @@
     class="flex transition-all items-center justify-center p-4 bg-gray-900 hover:bg-gray-800 cursor-pointer h-[180px]"
   >
     <input type="file" class="sr-only" on:input={handleFileInput} />
-    {#if loadedFile}
+    {#if selectedTrack}
       <div class="w-full flex flex-col justify-between h-full">
-        <p class="text-lg">{loadedFile.name}</p>
+        <p class="text-lg">{selectedTrack.name}</p>
         <div class="flex items-end justify-between">
           <p>
             {formatSeconds(currentTime)} / {formatSeconds(
-              loadedFile.duration || 0
+              songAnalysis?.duration || 0
             )}
           </p>
           {#if songAnalysis}
@@ -322,23 +311,26 @@
       <span class="text-gray-400">Select a file (mp3, wav, flac)</span>
     {/if}
   </label>
-  <div>
-    <canvas
-      class="bg-gray-900"
-      width="100%"
-      height="100"
-      use:drawSongAnalysisAction={songAnalysis}
-    />
-  </div>
-  <input
-    type="range"
-    min="0"
-    max="100"
-    step="0.01"
-    style="width: 100%"
-    value={(currentTime / (loadedFile?.duration || 400)) * 100}
-    on:input={handleRangeInput}
+  <Waveform
+    {songAnalysis}
+    {currentTime}
+    on:changeCurrentTime={(ev) => {
+      if (element) {
+        element.currentTime = ev.detail;
+      }
+    }}
   />
+  {#if false}
+    <input
+      type="range"
+      min="0"
+      max="100"
+      step="0.01"
+      style="width: 100%"
+      value={(currentTime / (songAnalysis?.duration || 400)) * 100}
+      on:input={handleRangeInput}
+    />
+  {/if}
   <div class={`flex items-end justify-between`}>
     <div
       class={`flex items-center space-x-8 ${

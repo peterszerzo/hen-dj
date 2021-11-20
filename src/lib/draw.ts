@@ -1,10 +1,13 @@
 import type { SongAnalysis } from "./audio";
 
+const drawPeaks = false;
+
 export const drawSongAnalysis = (
   canvasElement: HTMLCanvasElement,
+  containerWidth: number,
   songAnalysis: SongAnalysis | null
 ) => {
-  const width = (canvasElement.parentNode as any)?.offsetWidth;
+  const width = containerWidth - 1;
   const height = canvasElement.height;
   canvasElement.width = width;
   if (!songAnalysis) {
@@ -23,7 +26,7 @@ export const drawSongAnalysis = (
     }
   });
   ctx.fillStyle = "rgba(255, 0, 100, 0.1)";
-  if (false) {
+  if (drawPeaks) {
     (songAnalysis.peaks || []).forEach((peakIndex) => {
       ctx.fillRect(
         (width * peakIndex) /
