@@ -31,15 +31,19 @@
 <div class="grid grid-cols-2 h-full">
   <Player
     class="col-span-1"
-    selected={selected === "left"}
+    active={selected === "left"}
     {tracks}
-    backgroundImage="https://ipfs.io/ipfs/QmYP8wsUT9ExFC1WJiSPod18gbJPwxdZtfq7b34dxW4kKL"
     flippedLayout
+    on:select={() => {
+      selected = "left";
+    }}
   />
   <Player
     class="col-span-1"
     {tracks}
-    selected={selected === "right"}
-    backgroundImage="https://ipfs.io/ipfs/QmYP8wsUT9ExFC1WJiSPod18gbJPwxdZtfq7b34dxW4kKL"
+    active={selected === "right"}
+    on:select={() => {
+      selected = "right";
+    }}
   />
 </div>

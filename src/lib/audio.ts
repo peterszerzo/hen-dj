@@ -133,7 +133,7 @@ const analyzePeaks = (
     if (bpmCandidate < 20) {
       return;
     }
-    while (bpmCandidate < 90) {
+    while (bpmCandidate < 75) {
       bpmCandidate *= 2;
     }
     bpmCandidates[bpmCandidate] = [

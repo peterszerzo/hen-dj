@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { onMount } from "svelte";
+  import { onMount, createEventDispatcher } from "svelte";
   import { spring } from "svelte/motion";
   import type { Track } from "$lib/track";
   import { analyzeSong, formatSeconds } from "$lib/audio";
@@ -12,13 +12,13 @@
   let lowFreq = 160.0;
   let midFreq = 720;
 
+  const dispatch = createEventDispatcher<{ select: unknown }>();
+
   export let tracks: Array<Track> = [];
 
   export let flippedLayout: boolean = false;
 
-  export let selected: boolean = false;
-
-  export let backgroundImage: string | undefined = undefined;
+  export let active: boolean = false;
 
   let element: HTMLAudioElement | null = null;
   let context: AudioContext | null = null;
@@ -51,8 +51,7 @@
 
   let songAnalysis: SongAnalysis | null = null;
 
-  let selectedTrack: { name: string; type: string; cover?: string } | null =
-    null;
+  let selectedTrack: Track | null = null;
 
   const adjustPlayback = (bpmDiff: number) => {
     if (element && songAnalysis) {
@@ -86,7 +85,7 @@
   let keys = [];
 
   const handleKeyPress = (ev: any) => {
-    if (!selected) {
+    if (!active) {
       return;
     }
     // Global keys
@@ -102,11 +101,11 @@
     if (sequence) {
       keys = [];
       if (sequence.verb === ",") {
-        bpmDiff = Math.round(bpmDiff * 10 + 2) / 10;
+        bpmDiff = Math.round(bpmDiff * 10 - 1) / 10;
         return;
       }
       if (sequence.verb === ".") {
-        bpmDiff = Math.round(bpmDiff * 10 - 2) / 10;
+        bpmDiff = Math.round(bpmDiff * 10 + 1) / 10;
         return;
       }
       if (sequence.verb === "/") {
@@ -171,12 +170,15 @@
 
   const setupAudio = (audioUrl: string) => {
     context = new AudioContext();
+
     if (element) {
       element.pause();
       element.remove();
     }
 
     element = new Audio();
+
+    element.crossOrigin = "anonymous";
 
     element.src = audioUrl;
 
@@ -272,10 +274,30 @@
       const type = file.type;
       const reader = new FileReader();
       reader.onload = (ev: any) => {
-        selectedTrack = { name, type };
+        selectedTrack = { name, mimetype: type };
         setupAudio(ev.target.result);
       };
       reader.readAsDataURL(file);
+    }
+  };
+
+  const handleTrackChoose = () => {
+    const trackIndex = flippedLayout ? 0 : 1;
+    if (!tracks[trackIndex]) {
+      return;
+    }
+    const track = tracks[trackIndex];
+    selectedTrack = track;
+    if (track.audio) {
+      fetch(track.audio)
+        .then((res) => res.blob())
+        .then((blob: Blob) => {
+          const file = new File([blob], blob.type);
+          analyzeSong(file).then((res: SongAnalysis) => {
+            songAnalysis = res;
+          });
+          setupAudio(track.audio);
+        });
     }
   };
 
@@ -287,20 +309,30 @@
   class={`space-y-4 p-8 ${customClass}`}
   style={`background-image: linear-gradient( rgba(0, 0, 0, ${
     0.7 + 0.1 * intensity
-  }), rgba(0, 0, 0, ${0.7 + 0.1 * intensity}) ), url(${backgroundImage})`}
+  }), rgba(0, 0, 0, ${0.7 + 0.1 * intensity}) ), url(${selectedTrack?.cover})`}
 >
   <p class="text-center">
-    {#if selected}<span
+    {#if active}<button
         class="inline-block w-4 h-4 rounded-full bg-white transition-all"
         style="box-shadow: 0 0 0 2px black, 0 0 0 4px white"
-      />{:else}<span class="inline-block w-4 h-4 rounded-full bg-gray-600" />
+        on:click={() => {
+          dispatch("select");
+        }}
+      />{:else}<button
+        class="inline-block w-4 h-4 rounded-full bg-gray-600"
+        on:click={() => {
+          dispatch("select");
+        }}
+      />
     {/if}
   </p>
-  <label
-    class="flex transition-all items-center justify-center p-4 bg-gray-900 hover:bg-gray-800 cursor-pointer h-[180px]"
-  >
-    <input type="file" class="sr-only" on:input={handleFileInput} />
-    {#if selectedTrack}
+  {#if selectedTrack}
+    <div
+      on:click={() => {
+        selectedTrack = null;
+      }}
+      class="flex transition-all text-left items-center justify-center p-4 bg-gray-900 hover:bg-gray-800 cursor-pointer h-[180px]"
+    >
       <div class="w-full flex flex-col justify-between h-full">
         <p class="text-lg">{selectedTrack.name}</p>
         <div class="flex items-end justify-between">
@@ -320,15 +352,28 @@
           {/if}
         </div>
       </div>
-    {:else}
-      <span class="text-gray-400">Select a file (mp3, wav, flac)</span>
-    {/if}
-  </label>
+    </div>
+  {:else}
+    <div class="grid grid-cols-2 gap-x-4">
+      <label
+        class="flex transition-all text-center col-span-1 items-center justify-center p-4 bg-gray-900 hover:bg-gray-800 cursor-pointer h-[180px]"
+      >
+        <input type="file" class="sr-only" on:input={handleFileInput} />
+        <span class="text-gray-400">Select a file (mp3, wav, flac)</span>
+      </label>
+      <button
+        on:click={handleTrackChoose}
+        class="col-span-1 h-[180px] bg-gray-900 hover:bg-gray-800 text-gray-400"
+        >Choose from HEN</button
+      >
+    </div>
+  {/if}
   <Waveform
     {songAnalysis}
     {currentTime}
     on:changeCurrentTime={(ev) => {
       if (element) {
+        currentTime = ev.detail;
         element.currentTime = ev.detail;
       }
     }}
