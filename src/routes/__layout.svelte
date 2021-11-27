@@ -38,12 +38,18 @@
   class="py-4 px-8 border-b border-gray-800 flex justify-between items-center"
 >
   <a class="inline-block" href="/">HEN DJ</a>
-  <button
-    class="text-xs inline-block text-gray-500 hover:text-gray-400"
-    on:click={() => {
-      shortcutsExpanded = true;
-    }}>Keybindings</button
-  >
+  <div class="flex items-center space-x-4">
+    <button
+      class="text-xs inline-block text-gray-500 hover:text-gray-400"
+      on:click={() => {
+        shortcutsExpanded = true;
+      }}>Keybindings</button
+    >
+    <a
+      class="text-xs inline-block text-gray-500 hover:text-gray-400"
+      href="/about">About</a
+    >
+  </div>
 </header>
 
 <main class="flex-grow">
