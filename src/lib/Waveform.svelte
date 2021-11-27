@@ -7,6 +7,8 @@
 
   const dispatch = createEventDispatcher<{ changeCurrentTime: number }>();
 
+  export let loading: boolean = false;
+
   export let songAnalysis: SongAnalysis | null = null;
 
   export let currentTime: number = 0;
@@ -37,6 +39,7 @@
   bind:this={container}
   bind:clientWidth={width}
   class="bg-gray-900 relative"
+  class:pulse={loading}
   on:click={handleClick}
 >
   <canvas width="100%" height="100" use:drawSongAnalysisAction={songAnalysis} />
@@ -49,3 +52,24 @@
     />
   {/if}
 </div>
+
+<style>
+  @keyframes pulseFrames {
+    0% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.6;
+    }
+    100% {
+      opacity: 1;
+    }
+  }
+
+  .pulse {
+    animation-name: pulseFrames;
+    animation-duration: 1600ms;
+    animation-iteration-count: infinite;
+    animation-timing-function: ease-in-out;
+  }
+</style>

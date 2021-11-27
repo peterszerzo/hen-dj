@@ -267,6 +267,7 @@
   const handleFileInput = (ev: any) => {
     const file = ev.target.files[0];
     if (file) {
+      songAnalysis = null;
       analyzeSong(file).then((res: SongAnalysis) => {
         songAnalysis = res;
       });
@@ -286,6 +287,7 @@
     if (!tracks[trackIndex]) {
       return;
     }
+    songAnalysis = null;
     const track = tracks[trackIndex];
     selectedTrack = track;
     if (track.audio) {
@@ -336,11 +338,15 @@
       <div class="w-full flex flex-col justify-between h-full">
         <p class="text-lg">{selectedTrack.name}</p>
         <div class="flex items-end justify-between">
-          <p>
-            {formatSeconds(currentTime)} / {formatSeconds(
-              songAnalysis?.duration || 0
-            )}
-          </p>
+          {#if songAnalysis}
+            <p>
+              {formatSeconds(currentTime)} / {formatSeconds(
+                songAnalysis.duration || 0
+              )}
+            </p>
+          {:else}
+            <p>...</p>
+          {/if}
           {#if songAnalysis}
             <div>
               <p class="text-sm text-right">BPM</p>
@@ -359,7 +365,17 @@
         class="flex transition-all text-center col-span-1 items-center justify-center p-4 bg-gray-900 hover:bg-gray-800 cursor-pointer h-[180px]"
       >
         <input type="file" class="sr-only" on:input={handleFileInput} />
-        <span class="text-gray-400">Select a file (mp3, wav, flac)</span>
+        <div>
+          <p class="text-gray-400">Select a file</p>
+          <p class="space-x-2">
+            {#each ["mp3", "wav", "flac"] as extension}
+              <span
+                class="px-1 py-0.5 text-xs bg-gray-700 rounded text-gray-400"
+                >.{extension}</span
+              >
+            {/each}
+          </p>
+        </div>
       </label>
       <button
         on:click={handleTrackChoose}
@@ -369,6 +385,7 @@
     </div>
   {/if}
   <Waveform
+    loading={selectedTrack && !songAnalysis}
     {songAnalysis}
     {currentTime}
     on:changeCurrentTime={(ev) => {
