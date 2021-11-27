@@ -5,4 +5,5 @@ export interface Track {
   audio?: string;
   cover?: string;
   mimetype: string;
+  id?: string;
 }

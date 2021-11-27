@@ -218,6 +218,11 @@
 
     const interval = setInterval(() => {
       if (element && playing) {
+        if (Math.abs(currentTime - element.duration) < 0.45) {
+          currentTime = 0;
+          element.currentTime = 0;
+          return;
+        }
         currentTime = element.currentTime;
       }
     }, 50);
@@ -256,19 +261,19 @@
   };
 
   const handleVolInput = (ev: any) => {
-    volValue.update(() => ev.target.value, { hard: true });
+    volValue.update(() => Number(ev.target.value), { hard: true });
   };
 
   const handleHighfInput = (ev: any) => {
-    highfValue.update(() => ev.target.value, { hard: true });
+    highfValue.update(() => Number(ev.target.value), { hard: true });
   };
 
   const handleMidfInput = (ev: any) => {
-    midfValue.update(() => ev.target.value, { hard: true });
+    midfValue.update(() => Number(ev.target.value), { hard: true });
   };
 
   const handleLowfInput = (ev: any) => {
-    lowfValue.update(() => ev.target.value, { hard: true });
+    lowfValue.update(() => Number(ev.target.value), { hard: true });
   };
 
   const handleFileInput = (ev: any) => {
@@ -322,13 +327,16 @@
     : ""}
 >
   <p class="text-center">
-    {#if active}<button
+    {#if active}
+      <button
         class="inline-block w-4 h-4 rounded-full bg-white transition-all"
         style="box-shadow: 0 0 0 2px black, 0 0 0 4px white"
         on:click={() => {
           dispatch("select");
         }}
-      />{:else}<button
+      />
+    {:else}
+      <button
         class="inline-block w-4 h-4 rounded-full bg-gray-600"
         on:click={() => {
           dispatch("select");
@@ -341,7 +349,7 @@
       class="flex group transition-all text-left items-center justify-center p-4 bg-gray-900 h-[160px]"
     >
       <div class="w-full flex flex-col justify-between h-full">
-        <div class="flex items-center space-x-2">
+        <div class="flex items-center space-x-4">
           <button
             class="hover:bg-gray-800 cursor-pointer text-lg px-2 py-0.5"
             on:click={() => {
@@ -351,6 +359,13 @@
           <p class="text-lg">
             {selectedTrack.creator || "unknown"} - {selectedTrack.name}
           </p>
+          {#if selectedTrack.id}
+            <a
+              class="text-xs underline"
+              target="_blank"
+              href={`https://hic.af/o/${selectedTrack.id}`}>View</a
+            >
+          {/if}
         </div>
         <div class="flex items-end justify-between">
           {#if songAnalysis}

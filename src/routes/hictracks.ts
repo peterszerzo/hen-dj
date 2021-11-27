@@ -56,13 +56,14 @@ export async function get({ query }) {
     getQuery(query.get("page") || "0")
   );
   return {
-    body: (response?.hic_et_nunc_token || []).map((response: any) => ({
-      name: response.title,
-      mimetype: response.mime,
-      creator: response.creator.name,
-      creatorId: response.creator_id,
-      cover: getIpfsUrl(response.thumbnail_uri),
-      audio: getIpfsUrl(response.artifact_uri),
+    body: (response?.hic_et_nunc_token || []).map((item: any) => ({
+      name: item.title,
+      mimetype: item.mime,
+      creator: item.creator.name,
+      creatorId: item.creator_id,
+      id: item.id,
+      cover: getIpfsUrl(item.thumbnail_uri),
+      audio: getIpfsUrl(item.artifact_uri),
     })),
   };
 }

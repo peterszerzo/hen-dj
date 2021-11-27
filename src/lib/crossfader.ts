@@ -5,7 +5,7 @@ export const crossfader = spring(0.5, {
   damping: 0.28,
 });
 
-const threshold = 0.3;
+const threshold = 0.4;
 
 export const getCrossfaderAdjustment = (value: number, first: boolean) =>
   first

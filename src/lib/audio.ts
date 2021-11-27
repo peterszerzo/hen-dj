@@ -43,6 +43,19 @@ export const analyzeSong = (file: File): Promise<SongAnalysis> => {
       const arrayBuffer: ArrayBuffer = reader.result as ArrayBuffer;
 
       new AudioContext().decodeAudioData(arrayBuffer).then((buffer) => {
+        if (buffer.duration > 1000) {
+          const simpleAnalysis: SongAnalysis = {
+            duration: buffer.duration,
+            min: -0.5,
+            max: 0.5,
+            bufferLength: 0,
+            sample: [],
+            sampleSize: 100,
+            sampleRate: buffer.sampleRate,
+          };
+          return simpleAnalysis;
+        }
+
         // Create offline context
         const offlineContext = new OfflineAudioContext(
           1,
