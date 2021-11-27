@@ -14,3 +14,6 @@ Browser-based DJ engine for H=N.
 * [ ] moving visualization.
 * [ ] swap tracks.
 
+## License
+
+MIT.
