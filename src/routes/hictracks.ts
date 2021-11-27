@@ -59,6 +59,8 @@ export async function get({ query }) {
     body: (response?.hic_et_nunc_token || []).map((response: any) => ({
       name: response.title,
       mimetype: response.mime,
+      creator: response.creator.name,
+      creatorId: response.creator_id,
       cover: getIpfsUrl(response.thumbnail_uri),
       audio: getIpfsUrl(response.artifact_uri),
     })),

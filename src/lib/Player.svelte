@@ -6,6 +6,7 @@
   import { analyzeSong, formatSeconds } from "$lib/audio";
   import IntensityBar from "$lib/IntensityBar.svelte";
   import Waveform from "$lib/Waveform.svelte";
+  import Loader from "$lib/Loader.svelte";
   import type { SongAnalysis } from "$lib/audio";
   import { validSequence } from "./keyboard";
 
@@ -13,9 +14,12 @@
   let lowFreq = 160.0;
   let midFreq = 720;
 
-  const dispatch = createEventDispatcher<{ select: unknown }>();
+  const dispatch =
+    createEventDispatcher<{ select: unknown; requestNewTracks: unknown }>();
 
   export let tracks: Array<Track> = [];
+
+  export let loadingTracks: boolean = false;
 
   export let first: boolean = false;
 
@@ -285,13 +289,8 @@
     }
   };
 
-  const handleTrackChoose = () => {
-    const trackIndex = first ? 0 : 1;
-    if (!tracks[trackIndex]) {
-      return;
-    }
+  const handleTrackChoose = (track: Track) => {
     songAnalysis = null;
-    const track = tracks[trackIndex];
     selectedTrack = track;
     if (track.audio) {
       fetch(track.audio)
@@ -342,14 +341,16 @@
       class="flex group transition-all text-left items-center justify-center p-4 bg-gray-900 h-[160px]"
     >
       <div class="w-full flex flex-col justify-between h-full">
-        <div class="flex justify-between items-center">
-          <p class="text-lg">{selectedTrack.name}</p>
+        <div class="flex items-center space-x-2">
           <button
-            class="hover:bg-gray-800 cursor-pointer text-sm px-2 py-0.5"
+            class="hover:bg-gray-800 cursor-pointer text-lg px-2 py-0.5"
             on:click={() => {
               selectedTrack = null;
-            }}>Remove</button
+            }}>←</button
           >
+          <p class="text-lg">
+            {selectedTrack.creator || "unknown"} - {selectedTrack.name}
+          </p>
         </div>
         <div class="flex items-end justify-between">
           {#if songAnalysis}
@@ -359,7 +360,7 @@
               )}
             </p>
           {:else}
-            <p>...</p>
+            <Loader />
           {/if}
           {#if songAnalysis}
             <div>
@@ -374,7 +375,30 @@
       </div>
     </div>
   {:else}
-    <div class="grid grid-cols-2 gap-x-4">
+    <div class="grid grid-cols-3 gap-x-4">
+      <div
+        class="col-span-2 h-[160px] bg-gray-900 overflow-auto hide-scrollbars"
+      >
+        <p class="px-2 py-1 text-sm text-gray-400">Choose from HEN</p>
+        {#each tracks as track}
+          <button
+            class="block w-full text-left px-2 py-1 text-sm hover:bg-gray-700"
+            on:click={() => {
+              handleTrackChoose(track);
+            }}>{track.creator || "unknown"} - {track.name}</button
+          >
+        {/each}
+        {#if loadingTracks}
+          <Loader />
+        {:else}
+          <button
+            class="px-2 py-2 block w-full text-xs text-gray-400 hover:bg-gray-700"
+            on:click={() => {
+              dispatch("requestNewTracks");
+            }}>Load more</button
+          >
+        {/if}
+      </div>
       <label
         class="flex transition-all text-center col-span-1 items-center justify-center p-4 bg-gray-900 hover:bg-gray-800 cursor-pointer h-[160px]"
       >
@@ -391,11 +415,6 @@
           </p>
         </div>
       </label>
-      <button
-        on:click={handleTrackChoose}
-        class="col-span-1 h-[160px] bg-gray-900 hover:bg-gray-800 text-gray-400"
-        >Choose from HEN</button
-      >
     </div>
   {/if}
   <Waveform
@@ -537,5 +556,9 @@
       0 0;
     background-size: var(--size) var(--size);
     background-repeat: repeat;
+  }
+
+  .hide-scrollbars::-webkit-scrollbar {
+    display: none;
   }
 </style>

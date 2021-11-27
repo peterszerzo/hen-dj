@@ -2,7 +2,7 @@ import { spring } from "svelte/motion";
 
 export const crossfader = spring(0.5, {
   stiffness: 0.01,
-  damping: 0.3,
+  damping: 0.28,
 });
 
 const threshold = 0.3;

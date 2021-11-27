@@ -11,18 +11,32 @@
 
   let tracks: Array<Track> = [];
 
+  let loadingTracks: boolean = false;
+
+  let page = 0;
+
   const handleKeyPress = (ev: any) => {
     if (ev.key === "t") {
       selected = selected === "left" ? "right" : "left";
     }
   };
 
+  const loadNewPage = async () => {
+    loadingTracks = true;
+    try {
+      const res = await fetch(`/hictracks?page=${page}`);
+      const newTracks = await res.json();
+      tracks = [...tracks, ...newTracks];
+      page = page + 1;
+      loadingTracks = false;
+    } catch (err) {
+      console.warn(err);
+      loadingTracks = false;
+    }
+  };
+
   onMount(() => {
-    fetch("/hictracks")
-      .then((res) => res.json())
-      .then((newTracks) => {
-        tracks = newTracks;
-      });
+    loadNewPage();
     window.addEventListener("keydown", handleKeyPress);
     return () => {
       window.removeEventListener("keydown", handleKeyPress);
@@ -35,18 +49,22 @@
     class="col-span-1"
     active={selected === "left"}
     {tracks}
+    {loadingTracks}
     first
     on:select={() => {
       selected = "left";
     }}
+    on:requestNewTracks={loadNewPage}
   />
   <Player
     class="col-span-1"
     {tracks}
+    {loadingTracks}
     active={selected === "right"}
     on:select={() => {
       selected = "right";
     }}
+    on:requestNewTracks={loadNewPage}
   />
 </div>
 <div class="p-4 flex items-center justify-center">
