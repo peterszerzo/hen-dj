@@ -17,7 +17,7 @@
 <div class="text-center">
   <p class="text-xs text-gray-400">crossfader</p>
   <div
-    class="w-72 h-10 bg-gray-800 hover:bg-gray-700"
+    class="w-72 h-8 bg-gray-800 hover:bg-gray-700"
     bind:clientWidth={width}
     bind:this={container}
     on:click={handleClick}

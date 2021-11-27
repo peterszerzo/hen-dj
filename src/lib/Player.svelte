@@ -68,7 +68,7 @@
   $: crossfaderVolumeAdjustment = getCrossfaderAdjustment($crossfader, first);
 
   $: if (vol) {
-    vol.gain.value = $volValue & crossfaderVolumeAdjustment;
+    vol.gain.value = $volValue * crossfaderVolumeAdjustment;
   }
 
   $: if (highf && context) {
@@ -339,13 +339,18 @@
   </p>
   {#if selectedTrack}
     <div
-      on:click={() => {
-        selectedTrack = null;
-      }}
-      class="flex group transition-all text-left items-center justify-center p-4 bg-gray-900 hover:bg-gray-800 cursor-pointer h-[160px]"
+      class="flex group transition-all text-left items-center justify-center p-4 bg-gray-900 h-[160px]"
     >
       <div class="w-full flex flex-col justify-between h-full">
-        <p class="text-lg">{selectedTrack.name}</p>
+        <div class="flex justify-between items-center">
+          <p class="text-lg">{selectedTrack.name}</p>
+          <button
+            class="hover:bg-gray-800 cursor-pointer text-sm px-2 py-0.5"
+            on:click={() => {
+              selectedTrack = null;
+            }}>Remove</button
+          >
+        </div>
         <div class="flex items-end justify-between">
           {#if songAnalysis}
             <p>

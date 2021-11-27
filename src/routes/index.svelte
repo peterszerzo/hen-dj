@@ -18,7 +18,7 @@
   };
 
   onMount(() => {
-    fetch("/tracks")
+    fetch("/hictracks")
       .then((res) => res.json())
       .then((newTracks) => {
         tracks = newTracks;
@@ -49,7 +49,7 @@
     }}
   />
 </div>
-<div class="p-2 flex items-center justify-center">
+<div class="p-4 flex items-center justify-center">
   <Crossfader
     value={$crossfader}
     on:change={(ev) => {
