@@ -1,6 +1,8 @@
 <script lang="ts">
   import { onMount } from "svelte";
   import Player from "$lib/Player.svelte";
+  import Crossfader from "$lib/Crossfader.svelte";
+  import { crossfader } from "$lib/crossfader";
   import type { Track } from "$lib/track";
 
   type Selected = "left" | "right";
@@ -33,7 +35,7 @@
     class="col-span-1"
     active={selected === "left"}
     {tracks}
-    flippedLayout
+    first
     on:select={() => {
       selected = "left";
     }}
@@ -44,6 +46,14 @@
     active={selected === "right"}
     on:select={() => {
       selected = "right";
+    }}
+  />
+</div>
+<div class="p-2 flex items-center justify-center">
+  <Crossfader
+    value={$crossfader}
+    on:change={(ev) => {
+      crossfader.set(ev.detail);
     }}
   />
 </div>

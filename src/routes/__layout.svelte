@@ -21,14 +21,16 @@
 </script>
 
 {#if shortcutsExpanded}
-  <div class="absolute w-full h-full top-0 left-0 bg-black p-8 space-y-4 z-20">
+  <div
+    class="absolute w-full h-full flex items-start justify-between top-0 left-0 bg-black p-2 space-y-4 z-20"
+  >
+    <Shortcuts />
     <button
-      class="text-xs inline-block"
+      class="text-xs p-2 inline-block rounded flex-none text-gray-400 hover:bg-gray-900"
       on:click={() => {
         shortcutsExpanded = false;
-      }}>[x] Close</button
+      }}>Close (Esc)</button
     >
-    <Shortcuts />
   </div>
 {/if}
 

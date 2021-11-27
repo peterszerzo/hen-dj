@@ -1,5 +1,6 @@
 <script lang="ts">
   import { onMount, createEventDispatcher } from "svelte";
+  import { crossfader, getCrossfaderAdjustment } from "$lib/crossfader";
   import { spring } from "svelte/motion";
   import type { Track } from "$lib/track";
   import { analyzeSong, formatSeconds } from "$lib/audio";
@@ -16,7 +17,7 @@
 
   export let tracks: Array<Track> = [];
 
-  export let flippedLayout: boolean = false;
+  export let first: boolean = false;
 
   export let active: boolean = false;
 
@@ -64,8 +65,10 @@
 
   $: adjustPlayback(bpmDiff);
 
+  $: crossfaderVolumeAdjustment = getCrossfaderAdjustment($crossfader, first);
+
   $: if (vol) {
-    vol.gain.value = $volValue;
+    vol.gain.value = $volValue & crossfaderVolumeAdjustment;
   }
 
   $: if (highf && context) {
@@ -283,7 +286,7 @@
   };
 
   const handleTrackChoose = () => {
-    const trackIndex = flippedLayout ? 0 : 1;
+    const trackIndex = first ? 0 : 1;
     if (!tracks[trackIndex]) {
       return;
     }
@@ -308,10 +311,16 @@
 </script>
 
 <div
-  class={`space-y-4 p-8 ${customClass}`}
-  style={`background-image: linear-gradient( rgba(0, 0, 0, ${
-    0.7 + 0.1 * intensity
-  }), rgba(0, 0, 0, ${0.7 + 0.1 * intensity}) ), url(${selectedTrack?.cover})`}
+  class={`space-y-4 p-8  ${
+    selectedTrack?.cover ? "" : first ? "pattern2" : "pattern1"
+  } ${customClass}`}
+  style={selectedTrack?.cover
+    ? `background-image: linear-gradient( rgba(0, 0, 0, ${
+        0.7 + 0.1 * intensity
+      }), rgba(0, 0, 0, ${0.7 + 0.1 * intensity}) ), url(${
+        selectedTrack?.cover
+      })`
+    : ""}
 >
   <p class="text-center">
     {#if active}<button
@@ -333,7 +342,7 @@
       on:click={() => {
         selectedTrack = null;
       }}
-      class="flex transition-all text-left items-center justify-center p-4 bg-gray-900 hover:bg-gray-800 cursor-pointer h-[180px]"
+      class="flex group transition-all text-left items-center justify-center p-4 bg-gray-900 hover:bg-gray-800 cursor-pointer h-[160px]"
     >
       <div class="w-full flex flex-col justify-between h-full">
         <p class="text-lg">{selectedTrack.name}</p>
@@ -362,7 +371,7 @@
   {:else}
     <div class="grid grid-cols-2 gap-x-4">
       <label
-        class="flex transition-all text-center col-span-1 items-center justify-center p-4 bg-gray-900 hover:bg-gray-800 cursor-pointer h-[180px]"
+        class="flex transition-all text-center col-span-1 items-center justify-center p-4 bg-gray-900 hover:bg-gray-800 cursor-pointer h-[160px]"
       >
         <input type="file" class="sr-only" on:input={handleFileInput} />
         <div>
@@ -379,7 +388,7 @@
       </label>
       <button
         on:click={handleTrackChoose}
-        class="col-span-1 h-[180px] bg-gray-900 hover:bg-gray-800 text-gray-400"
+        class="col-span-1 h-[160px] bg-gray-900 hover:bg-gray-800 text-gray-400"
         >Choose from HEN</button
       >
     </div>
@@ -395,30 +404,15 @@
       }
     }}
   />
-  {#if false}
-    <input
-      type="range"
-      min="0"
-      max="100"
-      step="0.01"
-      style="width: 100%"
-      value={(currentTime / (songAnalysis?.duration || 400)) * 100}
-      on:input={handleRangeInput}
-    />
-  {/if}
   <div class={`flex items-end justify-between`}>
-    <div
-      class={`flex items-center space-x-8 ${
-        flippedLayout ? "order-2" : "order-1"
-      }`}
-    >
-      {#if !flippedLayout}
+    <div class={`flex items-center space-x-8 ${first ? "order-2" : "order-1"}`}>
+      {#if !first}
         <IntensityBar value={intensity} />
       {/if}
       <div class="space-y-4">
         <div class="space-y-1">
-          <label class="block">
-            <p class="text-xs">highs</p>
+          <label class="block text-center">
+            <p class="text-xs text-gray-400">highs</p>
             <input
               type="range"
               min="-24"
@@ -428,8 +422,8 @@
               on:input={handleHighfInput}
             />
           </label>
-          <label class="block">
-            <p class="text-xs">mids</p>
+          <label class="block text-center">
+            <p class="text-xs text-gray-400">mids</p>
             <input
               type="range"
               min="-24"
@@ -439,8 +433,8 @@
               on:input={handleMidfInput}
             />
           </label>
-          <label class="block">
-            <p class="text-xs">lows</p>
+          <label class="block text-center">
+            <p class="text-xs text-gray-400">lows</p>
             <input
               type="range"
               min="-24"
@@ -451,8 +445,8 @@
             />
           </label>
         </div>
-        <label class="block">
-          <p class="text-xs">volume</p>
+        <label class="block text-center">
+          <p class="text-xs text-gray-400">volume</p>
           <input
             type="range"
             min="0"
@@ -463,11 +457,11 @@
           />
         </label>
       </div>
-      {#if flippedLayout}
+      {#if first}
         <IntensityBar value={intensity} />
       {/if}
     </div>
-    <div class={`${flippedLayout ? "order-1" : "order-2"}`}>
+    <div class={`${first ? "order-1" : "order-2"}`}>
       <button
         class="w-16 h-16 transition-all bg-white rounded-full text-black hover:bg-black hover:text-white border-2 border-white p-4"
         on:click={() => {
@@ -503,3 +497,40 @@
     </div>
   </div>
 </div>
+
+<style>
+  .pattern1 {
+    --color1: #020202;
+    --color2: #111;
+    --size: 30px;
+    background-image: linear-gradient(
+        135deg,
+        var(--color1) 25%,
+        transparent 25%
+      ),
+      linear-gradient(225deg, var(--color1) 25%, transparent 25%),
+      linear-gradient(45deg, var(--color1) 25%, transparent 25%),
+      linear-gradient(315deg, var(--color1) 25%, var(--color2) 25%);
+    background-position: var(--size) 0, var(--size) 0, 0 0, 0 0;
+    background-size: var(--size) var(--size);
+    background-repeat: repeat;
+  }
+
+  .pattern2 {
+    --color1: #020202;
+    --color2: #111;
+    --size: 30px;
+    background-image: linear-gradient(
+        135deg,
+        var(--color1) 25%,
+        transparent 25%
+      ),
+      linear-gradient(225deg, var(--color1) 25%, transparent 25%),
+      linear-gradient(45deg, var(--color1) 25%, transparent 25%),
+      linear-gradient(315deg, var(--color1) 25%, var(--color2) 25%);
+    background-position: calc(var(--size) / 2) 0, calc(var(--size) / 2) 0, 0 0,
+      0 0;
+    background-size: var(--size) var(--size);
+    background-repeat: repeat;
+  }
+</style>

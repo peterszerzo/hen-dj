@@ -42,7 +42,7 @@
   class:pulse={loading}
   on:click={handleClick}
 >
-  <canvas width="100%" height="100" use:drawSongAnalysisAction={songAnalysis} />
+  <canvas width="100%" height="80" use:drawSongAnalysisAction={songAnalysis} />
   {#if songAnalysis}
     <div
       class="h-full absolute bg-blue-500 top-0"
@@ -59,7 +59,7 @@
       opacity: 1;
     }
     50% {
-      opacity: 0.6;
+      opacity: 0.8;
     }
     100% {
       opacity: 1;
