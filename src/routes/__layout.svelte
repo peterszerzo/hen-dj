@@ -2,6 +2,7 @@
   import "../app.css";
   import { onMount } from "svelte";
   import Shortcuts from "$lib/Shortcuts.svelte";
+  import Logo from "$lib/Logo.svelte";
 
   let shortcutsExpanded: boolean = false;
 
@@ -36,7 +37,7 @@
 <header
   class="py-4 px-8 border-b border-gray-800 flex justify-between items-center"
 >
-  <a class="inline-block" href="/">HEN DJ</a>
+  <a class="inline-block w-16" title="HEN DJ" href="/"><Logo /></a>
   <div class="flex items-center space-x-4">
     <button
       class="text-xs inline-block text-gray-500 hover:text-gray-400"
