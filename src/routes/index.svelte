@@ -71,7 +71,7 @@
   <Crossfader
     value={$crossfader}
     on:change={(ev) => {
-      crossfader.set(ev.detail);
+      crossfader.set(ev.detail, { hard: true });
     }}
   />
 </div>

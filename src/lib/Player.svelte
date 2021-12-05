@@ -315,9 +315,7 @@
 </script>
 
 <div
-  class={`space-y-4 p-8  ${
-    selectedTrack?.cover ? "" : first ? "pattern2" : "pattern1"
-  } ${customClass}`}
+  class={`space-y-4 p-8 ${customClass}`}
   style={selectedTrack?.cover
     ? `background-image: linear-gradient( rgba(0, 0, 0, ${
         0.7 + 0.1 * intensity
@@ -539,9 +537,9 @@
 
 <style>
   .pattern1 {
-    --color1: #020202;
-    --color2: #111;
-    --size: 30px;
+    --color1: #000;
+    --color2: #0b0b0b;
+    --size: 40px;
     background-image: linear-gradient(
         135deg,
         var(--color1) 25%,
@@ -556,9 +554,9 @@
   }
 
   .pattern2 {
-    --color1: #020202;
-    --color2: #111;
-    --size: 30px;
+    --color1: #000000;
+    --color2: #0b0b0b;
+    --size: 50px;
     background-image: linear-gradient(
         135deg,
         var(--color1) 25%,

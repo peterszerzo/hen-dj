@@ -2,7 +2,6 @@
   import "../app.css";
   import { onMount } from "svelte";
   import Shortcuts from "$lib/Shortcuts.svelte";
-  import { crossfader } from "$lib/crossfader";
 
   let shortcutsExpanded: boolean = false;
 
